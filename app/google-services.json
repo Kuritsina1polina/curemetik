@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "370270998566",
+    "project_id": "curemetik",
+    "storage_bucket": "curemetik.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:370270998566:android:ebda6e2ed47a990bdad6e7",
+        "android_client_info": {
+          "package_name": "com.example.curemetik"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCWUDoxFih4bzPKsghk76wEExPaRPyGc14"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

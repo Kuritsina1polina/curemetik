@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">curemetik</string>
+    <string name="name_in_app">CUREMETIK</string>
+    <string name="title_activity_curemetik">Curemetik</string>
+    <string name="title_history">История</string>
+    <string name="title_top">Топ</string>
+    <string name="title_camera">Сканировать</string>
+    <string name="title_add">Добавить</string>
+    <string name="title_search">Поиск</string>
+</resources>
