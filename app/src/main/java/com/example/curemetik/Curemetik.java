@@ -30,9 +30,9 @@ public class Curemetik extends AppCompatActivity {
                 R.id.navigation_history, R.id.navigation_top, R.id.navigation_camera, R.id.navigation_add,
                 R.id.navigation_search)
                 .build();
-        //NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_curemetik);
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_curemetik);
         //NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
-        //NavigationUI.setupWithNavController(binding.navView, navController);
+        NavigationUI.setupWithNavController(binding.navView, navController);
     }
 
 }
