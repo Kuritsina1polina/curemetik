@@ -51,6 +51,10 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics:19.0.1")
     implementation("com.google.firebase:firebase-auth:20.0.1")
     implementation("com.google.firebase:firebase-database:19.7.0")
+    implementation("com.google.firebase:firebase-storage:20.0.0")
+
+    implementation("com.firebaseui:firebase-ui-database:8.0.1")
+
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
     implementation("com.rengwuxian.materialedittext:library:2.1.4")
     implementation("uk.co.chrisjenx:calligraphy:2.3.0")
