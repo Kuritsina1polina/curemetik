@@ -68,8 +68,8 @@ public class AddFragment extends Fragment {
         binding = FragmentAddBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        final TextView textView = binding.textAdd;
-        addViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        //final TextView textView = binding.textAdd;
+        //addViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
 
         recyclerView = binding.recyclerView;
         searchEditText = binding.searchEditText;
