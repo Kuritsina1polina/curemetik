@@ -18,5 +18,3 @@
 .externalNativeBuild
 .cxx
 local.properties
-# Selected device
-.idea/deploymentTargetSelector.xml

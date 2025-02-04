@@ -47,24 +47,14 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    // Firebase
 
+    // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.6.0"))
     implementation("com.google.firebase:firebase-analytics:19.0.1")
     implementation("com.google.firebase:firebase-auth:20.0.1")
     implementation("com.google.firebase:firebase-database:19.7.0")
     implementation("com.google.firebase:firebase-storage:20.0.0")
-
     implementation("com.firebaseui:firebase-ui-database:8.0.1")
-
-    /*implementation(platform("com.google.firebase:firebase-bom:33.8.0"))
-    implementation("com.google.firebase:firebase-analytics:22.2.0")
-    implementation("com.google.firebase:firebase-auth:23.1.0")
-    implementation("com.google.firebase:firebase-database:21.0.1")
-    implementation("com.google.firebase:firebase-storage:21.0.1")
-
-    implementation("com.firebaseui:firebase-ui-database:8.0.2")*/
-
 
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
     implementation("com.rengwuxian.materialedittext:library:2.1.4")
