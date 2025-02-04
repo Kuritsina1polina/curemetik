@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "370270998566",
+    "firebase_url": "https://curemetik-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "curemetik",
     "storage_bucket": "curemetik.firebasestorage.app"
   },

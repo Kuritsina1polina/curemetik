@@ -10,3 +10,7 @@
 
 список продуктов, предыдущих проверок. название, фото и рейтинг в звездочках
 ![image](https://github.com/user-attachments/assets/f32f6d22-6362-4ffb-a237-8943a377463c)
+
+###
+Ссылка на БД
+https://console.firebase.google.com/project/curemetik/database/curemetik-default-rtdb/data/~2F

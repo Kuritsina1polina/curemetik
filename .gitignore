@@ -4,12 +4,19 @@
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
-/.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+# User-specific stuff:
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries
+.idea/vcs.xml
+.idea/jsLibraryMappings.xml
 .DS_Store
 /build
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+# Selected device
+.idea/deploymentTargetSelector.xml
