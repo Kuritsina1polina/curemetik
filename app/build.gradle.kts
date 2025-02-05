@@ -61,4 +61,6 @@ dependencies {
     implementation("uk.co.chrisjenx:calligraphy:2.3.0")
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("androidx.fragment:fragment-ktx:1.3.2")
+
+    implementation ("com.google.android.gms:play-services-tasks:16.0.1")
 }

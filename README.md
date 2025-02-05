@@ -14,3 +14,9 @@
 ###
 Ссылка на БД
 https://console.firebase.google.com/project/curemetik/database/curemetik-default-rtdb/data/~2F
+
+Сохранение продукта в базу
+Создана база продуктов,
+временно отключена работа с изображениями в 
+saveProductToDatabase
+saveProductDetailsToDatabase

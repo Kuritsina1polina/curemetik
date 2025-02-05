@@ -39,6 +39,9 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.OnFailureListener;
+
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -185,20 +188,22 @@ public class AddFragment extends Fragment {
     }
 
     private void saveProductToDatabase() {
+        // Название продукта
         EditText productNameEditText = binding.editText;
         String productName = productNameEditText.getText().toString().trim();
+        // Рейтинг
         RatingBar ratingBar = binding.ratingBar;
         float rating = ratingBar.getRating();
-
         if (productName.isEmpty()) {
             Toast.makeText(getContext(), "Введите название продукта", Toast.LENGTH_SHORT).show();
             return;
         }
-
+        // TODO пока комментируем работу с изображением
+        /*
         if (selectedImageBitmap == null && imageUri == null) {
             Toast.makeText(getContext(), "Выберите или сделайте фото продукта", Toast.LENGTH_SHORT).show();
             return;
-        }
+        }*/
 
         List<String> selectedComponents = new ArrayList<>();
         for (CosmeticItem item : filteredCosmeticItems) {
@@ -213,6 +218,8 @@ public class AddFragment extends Fragment {
         }
 
         // Сохранение изображения в Firebase Storage
+        // TODO пока комментируем работу с изображением
+        /*
         StorageReference storageReference = FirebaseStorage.getInstance().getReference("product_images");
         StorageReference imageRef;
         if (imageUri != null) {
@@ -233,17 +240,43 @@ public class AddFragment extends Fragment {
                 saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl);
             }));
         }
+        */
+        // TODO обработать изображение
+        String imageUrl = "simple image url";
+        saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl);
     }
 
     private void saveProductDetailsToDatabase(String productName, float rating, List<String> selectedComponents, String imageUrl) {
+        /*
         DatabaseReference productRef = databaseReference.push();
+
         Product product = new Product(productName, rating, selectedComponents, imageUrl);
+
         productRef.setValue(product).addOnSuccessListener(aVoid -> {
             Toast.makeText(getContext(), "Продукт успешно добавлен", Toast.LENGTH_SHORT).show();
             clearForm();
         }).addOnFailureListener(e -> {
             Toast.makeText(getContext(), "Ошибка при добавлении продукта", Toast.LENGTH_SHORT).show();
         });
+        */
+
+        DatabaseReference productRef = FirebaseDatabase.getInstance().getReference("products");
+
+        Product product = new Product(productName, rating, selectedComponents, imageUrl);
+        productRef.push().setValue(product)
+            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
+                    Toast.makeText(getContext(), "Продукт успешно добавлен", Toast.LENGTH_SHORT).show();
+                    clearForm();
+                }
+            })
+            .addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Toast.makeText(getContext(), "Ошибка при добавлении продукта", Toast.LENGTH_SHORT).show();
+                }
+            });
     }
 
     private void clearForm() {
