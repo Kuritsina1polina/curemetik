@@ -1,10 +1,15 @@
 package com.example.curemetik.ui.add;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -23,6 +28,8 @@ import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -41,8 +48,6 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -67,6 +72,7 @@ public class AddFragment extends Fragment {
     private Bitmap selectedImageBitmap;
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int REQUEST_IMAGE_PICK = 2;
+    private static final int REQUEST_PERMISSIONS = 100;
     private Spinner spinnerCategory;
     private String selectedCategory;
 
@@ -117,12 +123,6 @@ public class AddFragment extends Fragment {
             public void onNothingSelected(AdapterView<?> parent) {
                 selectedCategory = null;
             }
-        });
-        View decorView = requireActivity().getWindow().getDecorView();
-        ViewCompat.setOnApplyWindowInsetsListener(decorView, (v, insets) -> {
-            int bottomInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
-            binding.buttonAdd.setPadding(0, 0, 0, bottomInset);
-            return insets;
         });
 
 
@@ -182,6 +182,7 @@ public class AddFragment extends Fragment {
 
         // Обработка нажатия на кнопку "Добавить"
         buttonAdd.setOnClickListener(v -> saveProductToDatabase());
+        requestPermissions();
 
         return root;
     }
@@ -197,13 +198,23 @@ public class AddFragment extends Fragment {
     }
 
     private void openGallery() {
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
         startActivityForResult(intent, REQUEST_IMAGE_PICK);
     }
 
     private void openCamera() {
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, "temp_image.jpg");
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+        values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES);
+
+        ContentResolver resolver = requireContext().getContentResolver();
+        imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (intent.resolveActivity(requireActivity().getPackageManager()) != null) {
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
             startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
         }
     }
@@ -211,7 +222,7 @@ public class AddFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
+        if (resultCode == Activity.RESULT_OK) {
             switch (requestCode) {
                 case REQUEST_IMAGE_PICK:
                     if (data != null) {
@@ -220,17 +231,35 @@ public class AddFragment extends Fragment {
                     }
                     break;
                 case REQUEST_IMAGE_CAPTURE:
-                    if (data != null) {
-                        Bundle extras = data.getExtras();
-                        if (extras != null) {
-                            selectedImageBitmap = (Bitmap) extras.get("data");
-                            imageView.setImageBitmap(selectedImageBitmap);
-                        }
+                    if (imageUri != null) {
+                        imageView.setImageURI(imageUri);
                     }
                     break;
             }
         }
     }
+
+    private void requestPermissions() {
+        String[] permissions = {
+                Manifest.permission.CAMERA,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+        };
+        requestPermissions(permissions, REQUEST_PERMISSIONS);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_PERMISSIONS) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Разрешения предоставлены
+            } else {
+                Toast.makeText(requireContext(), "Разрешения не предоставлены", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
 
     private void saveProductToDatabase() {
         // Название продукта
@@ -248,11 +277,11 @@ public class AddFragment extends Fragment {
             return;
         }
         // TODO пока комментируем работу с изображением
-        /*
+
         if (selectedImageBitmap == null && imageUri == null) {
             Toast.makeText(getContext(), "Выберите или сделайте фото продукта", Toast.LENGTH_SHORT).show();
             return;
-        }*/
+        }
 
         List<String> selectedComponents = new ArrayList<>();
         for (CosmeticItem item : filteredCosmeticItems) {
@@ -268,7 +297,7 @@ public class AddFragment extends Fragment {
 
         // Сохранение изображения в Firebase Storage
         // TODO пока комментируем работу с изображением
-        /*
+
         StorageReference storageReference = FirebaseStorage.getInstance().getReference("product_images");
         StorageReference imageRef;
         if (imageUri != null) {
@@ -276,7 +305,7 @@ public class AddFragment extends Fragment {
             UploadTask uploadTask = imageRef.putFile(imageUri);
             uploadTask.addOnSuccessListener(taskSnapshot -> imageRef.getDownloadUrl().addOnSuccessListener(uri -> {
                 String imageUrl = uri.toString();
-                saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl);
+                saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl, selectedCategory);
             }));
         } else {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -286,10 +315,10 @@ public class AddFragment extends Fragment {
             UploadTask uploadTask = imageRef.putBytes(data);
             uploadTask.addOnSuccessListener(taskSnapshot -> imageRef.getDownloadUrl().addOnSuccessListener(uri -> {
                 String imageUrl = uri.toString();
-                saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl);
+                saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl, selectedCategory);
             }));
         }
-        */
+
         // TODO обработать изображение
         String imageUrl = "simple image url";
         saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl, selectedCategory);
