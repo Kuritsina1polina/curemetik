@@ -11,12 +11,15 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -38,6 +41,8 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -62,6 +67,8 @@ public class AddFragment extends Fragment {
     private Bitmap selectedImageBitmap;
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int REQUEST_IMAGE_PICK = 2;
+    private Spinner spinnerCategory;
+    private String selectedCategory;
 
     @Nullable
     @Override
@@ -81,6 +88,44 @@ public class AddFragment extends Fragment {
         Button buttonGallery = binding.buttonGallery;
         Button buttonCamera = binding.buttonCamera;
         Button buttonAdd = binding.buttonAdd;
+        spinnerCategory = binding.spinnerCategory;
+
+        // Список категорий
+        String[] categories = {
+                "Макияж",
+                "Лицо",
+                "Глаза",
+                "Губы",
+                "Брови",
+                "Уход",
+                "Волосы"
+        };
+
+        // Настройка адаптера для Spinner
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, categories);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerCategory.setAdapter(adapter);
+
+        // Обработка выбора категории
+        spinnerCategory.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selectedCategory = categories[position];
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                selectedCategory = null;
+            }
+        });
+        View decorView = requireActivity().getWindow().getDecorView();
+        ViewCompat.setOnApplyWindowInsetsListener(decorView, (v, insets) -> {
+            int bottomInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+            binding.buttonAdd.setPadding(0, 0, 0, bottomInset);
+            return insets;
+        });
+
+
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -198,6 +243,10 @@ public class AddFragment extends Fragment {
             Toast.makeText(getContext(), "Введите название продукта", Toast.LENGTH_SHORT).show();
             return;
         }
+        if (selectedCategory == null || selectedCategory.isEmpty()) {
+            Toast.makeText(getContext(), "Выберите категорию", Toast.LENGTH_SHORT).show();
+            return;
+        }
         // TODO пока комментируем работу с изображением
         /*
         if (selectedImageBitmap == null && imageUri == null) {
@@ -243,10 +292,10 @@ public class AddFragment extends Fragment {
         */
         // TODO обработать изображение
         String imageUrl = "simple image url";
-        saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl);
+        saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl, selectedCategory);
     }
 
-    private void saveProductDetailsToDatabase(String productName, float rating, List<String> selectedComponents, String imageUrl) {
+    private void saveProductDetailsToDatabase(String productName, float rating, List<String> selectedComponents, String imageUrl, String selectedCategory) {
         /*
         DatabaseReference productRef = databaseReference.push();
 
@@ -262,7 +311,7 @@ public class AddFragment extends Fragment {
 
         DatabaseReference productRef = FirebaseDatabase.getInstance().getReference("products");
 
-        Product product = new Product(productName, rating, selectedComponents, imageUrl);
+        Product product = new Product(productName, rating, selectedComponents, imageUrl, selectedCategory);
         productRef.push().setValue(product)
             .addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
@@ -285,6 +334,7 @@ public class AddFragment extends Fragment {
         imageView.setImageDrawable(null);
         selectedImageBitmap = null;
         imageUri = null;
+        spinnerCategory.setSelection(0);
         for (CosmeticItem item : filteredCosmeticItems) {
             item.setSelected(false);
         }
