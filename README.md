@@ -20,3 +20,8 @@ https://console.firebase.google.com/project/curemetik/database/curemetik-default
 временно отключена работа с изображениями в 
 saveProductToDatabase
 saveProductDetailsToDatabase
+
+Для того, чтобы включилась камера
+https://stackoverflow.com/questions/62535856/intent-resolveactivity-returns-null-in-api-30
+Некоторые устаревшие методы
+https://stackoverflow.com/questions/62671106/onactivityresult-method-is-deprecated-what-is-the-alternative

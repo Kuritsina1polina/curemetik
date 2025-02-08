@@ -125,8 +125,6 @@ public class AddFragment extends Fragment {
             }
         });
 
-
-
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         cosmeticItems = new ArrayList<>();
@@ -207,15 +205,19 @@ public class AddFragment extends Fragment {
         ContentValues values = new ContentValues();
         values.put(MediaStore.Images.Media.DISPLAY_NAME, "temp_image.jpg");
         values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+        // values.put(MediaStore.Images.Media.DESCRIPTION, "Снимок продукта");
         values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES);
 
         ContentResolver resolver = requireContext().getContentResolver();
         imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
 
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
         if (intent.resolveActivity(requireActivity().getPackageManager()) != null) {
             intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+            // TODO Old Way
             startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
+
         }
     }
 
