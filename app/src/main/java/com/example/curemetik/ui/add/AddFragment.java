@@ -302,13 +302,32 @@ public class AddFragment extends Fragment {
 
         StorageReference storageReference = FirebaseStorage.getInstance().getReference("product_images");
         StorageReference imageRef;
+
+        // TODO не работет пока код upload
         if (imageUri != null) {
             imageRef = storageReference.child(imageUri.getLastPathSegment());
+            String imageUrl = imageRef.getDownloadUrl().toString();
+
             UploadTask uploadTask = imageRef.putFile(imageUri);
+
+            uploadTask.addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception exception) {
+                    // Handle unsuccessful uploads
+                }
+            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
+                    saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl, selectedCategory);
+                }
+            });
+            /*
             uploadTask.addOnSuccessListener(taskSnapshot -> imageRef.getDownloadUrl().addOnSuccessListener(uri -> {
                 String imageUrl = uri.toString();
                 saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl, selectedCategory);
             }));
+             */
         } else {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             selectedImageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
@@ -321,9 +340,6 @@ public class AddFragment extends Fragment {
             }));
         }
 
-        // TODO обработать изображение
-        String imageUrl = "simple image url";
-        saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl, selectedCategory);
     }
 
     private void saveProductDetailsToDatabase(String productName, float rating, List<String> selectedComponents, String imageUrl, String selectedCategory) {
