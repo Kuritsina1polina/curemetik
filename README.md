@@ -25,3 +25,5 @@ saveProductDetailsToDatabase
 https://stackoverflow.com/questions/62535856/intent-resolveactivity-returns-null-in-api-30
 Некоторые устаревшие методы
 https://stackoverflow.com/questions/62671106/onactivityresult-method-is-deprecated-what-is-the-alternative
+Конверт 
+https://stackoverflow.com/questions/36189503/take-picture-and-convert-to-base64

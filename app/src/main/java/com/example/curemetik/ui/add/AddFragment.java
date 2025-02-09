@@ -7,15 +7,18 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -53,6 +56,8 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.OnFailureListener;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,6 +74,7 @@ public class AddFragment extends Fragment {
     private EditText searchEditText;
     private ImageView imageView;
     private Uri imageUri;
+    private String encodedImage;
     private Bitmap selectedImageBitmap;
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int REQUEST_IMAGE_PICK = 2;
@@ -179,7 +185,10 @@ public class AddFragment extends Fragment {
         buttonCamera.setOnClickListener(v -> openCamera());
 
         // Обработка нажатия на кнопку "Добавить"
-        buttonAdd.setOnClickListener(v -> saveProductToDatabase());
+        // TODO пока меняем на новый, чтобы много не ломать
+        // buttonAdd.setOnClickListener(v -> saveProductToDatabase());
+        buttonAdd.setOnClickListener(v -> saveProductToDatabaseNew());
+
         requestPermissions();
 
         return root;
@@ -220,7 +229,33 @@ public class AddFragment extends Fragment {
 
         }
     }
-
+    private String encodeImage(Bitmap bmp)
+    {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.JPEG,100, baos);
+        return Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
+    }
+    // TODO Возможно пригодится
+    /*
+    private String encodeImage(String path)
+    {
+        /*File imagefile = new File(path);
+        FileInputStream fis = null;
+        try{
+            fis = new FileInputStream(imagefile);
+        }catch(FileNotFoundException e){
+            e.printStackTrace();
+        }
+        Bitmap bm = BitmapFactory.decodeStream(fis);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bm.compress(Bitmap.CompressFormat.JPEG,100,baos);
+        byte[] b = baos.toByteArray();
+        String encImage = Base64.encodeToString(b, Base64.DEFAULT);
+        //Base64.de
+        return encImage;
+    }
+    */
+    // TODO Переделать deprecated методы
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -230,6 +265,15 @@ public class AddFragment extends Fragment {
                     if (data != null) {
                         imageUri = data.getData();
                         imageView.setImageURI(imageUri);
+                        // Шифруем в BASE64, потому что google - жадины
+                        final InputStream imageStream;
+                        try {
+                            imageStream = requireActivity().getContentResolver().openInputStream(imageUri);
+                        } catch (FileNotFoundException e) {
+                            throw new RuntimeException(e);
+                        }
+                        final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
+                        encodedImage = encodeImage(selectedImage);
                     }
                     break;
                 case REQUEST_IMAGE_CAPTURE:
@@ -239,7 +283,7 @@ public class AddFragment extends Fragment {
                     break;
             }
         }
-    }
+                }
 
     private void requestPermissions() {
         String[] permissions = {
@@ -263,6 +307,44 @@ public class AddFragment extends Fragment {
     }
 
 
+    private void saveProductToDatabaseNew(){
+// Название продукта
+        EditText productNameEditText = binding.editText;
+        String productName = productNameEditText.getText().toString().trim();
+        // Рейтинг
+        RatingBar ratingBar = binding.ratingBar;
+        float rating = ratingBar.getRating();
+        if (productName.isEmpty()) {
+            Toast.makeText(getContext(), "Введите название продукта", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (selectedCategory == null || selectedCategory.isEmpty()) {
+            Toast.makeText(getContext(), "Выберите категорию", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (selectedImageBitmap == null && imageUri == null) {
+            Toast.makeText(getContext(), "Выберите или сделайте фото продукта", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        List<String> selectedComponents = new ArrayList<>();
+        for (CosmeticItem item : filteredCosmeticItems) {
+            if (item.isSelected()) {
+                selectedComponents.add(item.getName());
+            }
+        }
+
+        if (selectedComponents.isEmpty()) {
+            Toast.makeText(getContext(), "Выберите компоненты продукта", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (encodedImage.isEmpty()){
+            Toast.makeText(getContext(), "Выберите изображение продукта", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        saveProductDetailsToDatabase(productName, rating, selectedComponents, encodedImage, selectedCategory);
+    }
     private void saveProductToDatabase() {
         // Название продукта
         EditText productNameEditText = binding.editText;
@@ -278,7 +360,6 @@ public class AddFragment extends Fragment {
             Toast.makeText(getContext(), "Выберите категорию", Toast.LENGTH_SHORT).show();
             return;
         }
-        // TODO пока комментируем работу с изображением
 
         if (selectedImageBitmap == null && imageUri == null) {
             Toast.makeText(getContext(), "Выберите или сделайте фото продукта", Toast.LENGTH_SHORT).show();
@@ -300,15 +381,16 @@ public class AddFragment extends Fragment {
         // Сохранение изображения в Firebase Storage
         // TODO пока комментируем работу с изображением
 
-        StorageReference storageReference = FirebaseStorage.getInstance().getReference("product_images");
-        StorageReference imageRef;
+        final StorageReference storageReference = FirebaseStorage.getInstance().getReference("product_images");
+        final StorageReference imageRef;
 
         // TODO не работет пока код upload
         if (imageUri != null) {
             imageRef = storageReference.child(imageUri.getLastPathSegment());
-            String imageUrl = imageRef.getDownloadUrl().toString();
-
+            // test
+            String fileExt = getFileExtension(imageUri);
             UploadTask uploadTask = imageRef.putFile(imageUri);
+            String imageUrl = imageRef.getDownloadUrl().toString();
 
             uploadTask.addOnFailureListener(new OnFailureListener() {
                 @Override
@@ -319,6 +401,7 @@ public class AddFragment extends Fragment {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                     // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
+
                     saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl, selectedCategory);
                 }
             });
@@ -332,6 +415,7 @@ public class AddFragment extends Fragment {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             selectedImageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
             byte[] data = baos.toByteArray();
+            // TODO "." + getFileExtension вместо .jpg по умолчанию
             imageRef = storageReference.child(System.currentTimeMillis() + ".jpg");
             UploadTask uploadTask = imageRef.putBytes(data);
             uploadTask.addOnSuccessListener(taskSnapshot -> imageRef.getDownloadUrl().addOnSuccessListener(uri -> {
@@ -341,12 +425,17 @@ public class AddFragment extends Fragment {
         }
 
     }
+    private String getFileExtension(Uri uri){
+        ContentResolver contentResolver = requireActivity().getContentResolver();
+        MimeTypeMap mime = MimeTypeMap.getSingleton();
+        return mime.getExtensionFromMimeType(contentResolver.getType(uri));
+    }
 
     private void saveProductDetailsToDatabase(String productName, float rating, List<String> selectedComponents, String imageUrl, String selectedCategory) {
-        /*
+
         DatabaseReference productRef = databaseReference.push();
 
-        Product product = new Product(productName, rating, selectedComponents, imageUrl);
+        Product product = new Product(productName, rating, selectedComponents, imageUrl, selectedCategory);
 
         productRef.setValue(product).addOnSuccessListener(aVoid -> {
             Toast.makeText(getContext(), "Продукт успешно добавлен", Toast.LENGTH_SHORT).show();
@@ -354,25 +443,6 @@ public class AddFragment extends Fragment {
         }).addOnFailureListener(e -> {
             Toast.makeText(getContext(), "Ошибка при добавлении продукта", Toast.LENGTH_SHORT).show();
         });
-        */
-
-        DatabaseReference productRef = FirebaseDatabase.getInstance().getReference("products");
-
-        Product product = new Product(productName, rating, selectedComponents, imageUrl, selectedCategory);
-        productRef.push().setValue(product)
-            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                @Override
-                public void onSuccess(Void aVoid) {
-                    Toast.makeText(getContext(), "Продукт успешно добавлен", Toast.LENGTH_SHORT).show();
-                    clearForm();
-                }
-            })
-            .addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Toast.makeText(getContext(), "Ошибка при добавлении продукта", Toast.LENGTH_SHORT).show();
-                }
-            });
     }
 
     private void clearForm() {
