@@ -17,11 +17,22 @@
         android:label="@string/title_top"
         tools:layout="@layout/fragment_top" />
 
+
     <fragment
         android:id="@+id/navigation_camera"
         android:name="com.example.curemetik.ui.camera.CameraFragment"
         android:label="@string/title_camera"
-        tools:layout="@layout/fragment_camera" />
+        tools:layout="@layout/fragment_camera" >
+        <action
+            android:id="@+id/action_navigation_camera_to_ProductDetailsFragment"
+            app:destination="@id/ProductDetailsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/ProductDetailsFragment"
+        android:name="com.example.curemetik.ui.camera.ProductDetailsFragment"
+        android:label="ProductDetailsFragment"
+        tools:layout="@layout/fragment_product_details" />
 
     <fragment
         android:id="@+id/navigation_add"
