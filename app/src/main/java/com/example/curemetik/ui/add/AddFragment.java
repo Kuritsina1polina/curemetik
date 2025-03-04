@@ -59,6 +59,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static android.app.Activity.RESULT_OK;
@@ -101,6 +102,7 @@ public class AddFragment extends Fragment {
         Button buttonCamera = binding.buttonCamera;
         Button buttonAdd = binding.buttonAdd;
         spinnerCategory = binding.spinnerCategory;
+        databaseReference = FirebaseDatabase.getInstance().getReference("products");
 
         // Список категорий
         String[] categories = {
@@ -187,8 +189,8 @@ public class AddFragment extends Fragment {
         // Обработка нажатия на кнопку "Добавить"
         // TODO пока меняем на новый, чтобы много не ломать
         // buttonAdd.setOnClickListener(v -> saveProductToDatabase());
-        buttonAdd.setOnClickListener(v -> saveProductToDatabaseNew());
-
+        //buttonAdd.setOnClickListener(v -> saveProductToDatabaseNew());
+        buttonAdd.setOnClickListener(v -> saveProductToDatabase());
         requestPermissions();
 
         return root;
@@ -307,17 +309,20 @@ public class AddFragment extends Fragment {
     }
 
 
-    private void saveProductToDatabaseNew(){
-// Название продукта
+    /*private void saveProductToDatabaseNew() {
+        // Название продукта
         EditText productNameEditText = binding.editText;
         String productName = productNameEditText.getText().toString().trim();
+
         // Рейтинг
         RatingBar ratingBar = binding.ratingBar;
         float rating = ratingBar.getRating();
+
         if (productName.isEmpty()) {
             Toast.makeText(getContext(), "Введите название продукта", Toast.LENGTH_SHORT).show();
             return;
         }
+
         if (selectedCategory == null || selectedCategory.isEmpty()) {
             Toast.makeText(getContext(), "Выберите категорию", Toast.LENGTH_SHORT).show();
             return;
@@ -339,12 +344,16 @@ public class AddFragment extends Fragment {
             Toast.makeText(getContext(), "Выберите компоненты продукта", Toast.LENGTH_SHORT).show();
             return;
         }
-        if (encodedImage.isEmpty()){
+
+        // Проверка на null перед вызовом isEmpty()
+        if (encodedImage == null || encodedImage.isEmpty()) {
             Toast.makeText(getContext(), "Выберите изображение продукта", Toast.LENGTH_SHORT).show();
             return;
         }
+
         saveProductDetailsToDatabase(productName, rating, selectedComponents, encodedImage, selectedCategory);
-    }
+    }*/
+
     private void saveProductToDatabase() {
         // Название продукта
         EditText productNameEditText = binding.editText;
@@ -352,6 +361,7 @@ public class AddFragment extends Fragment {
         // Рейтинг
         RatingBar ratingBar = binding.ratingBar;
         float rating = ratingBar.getRating();
+
         if (productName.isEmpty()) {
             Toast.makeText(getContext(), "Введите название продукта", Toast.LENGTH_SHORT).show();
             return;
@@ -378,52 +388,61 @@ public class AddFragment extends Fragment {
             return;
         }
 
-        // Сохранение изображения в Firebase Storage
-        // TODO пока комментируем работу с изображением
-
-        final StorageReference storageReference = FirebaseStorage.getInstance().getReference("product_images");
-        final StorageReference imageRef;
-
-        // TODO не работет пока код upload
-        if (imageUri != null) {
-            imageRef = storageReference.child(imageUri.getLastPathSegment());
-            // test
-            String fileExt = getFileExtension(imageUri);
-            UploadTask uploadTask = imageRef.putFile(imageUri);
-            String imageUrl = imageRef.getDownloadUrl().toString();
-
-            uploadTask.addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception exception) {
-                    // Handle unsuccessful uploads
-                }
-            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
-
-                    saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl, selectedCategory);
-                }
-            });
-            /*
-            uploadTask.addOnSuccessListener(taskSnapshot -> imageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                String imageUrl = uri.toString();
-                saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl, selectedCategory);
-            }));
-             */
-        } else {
+        // Кодирование изображения в Base64
+        if (selectedImageBitmap != null) {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             selectedImageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-            byte[] data = baos.toByteArray();
-            // TODO "." + getFileExtension вместо .jpg по умолчанию
-            imageRef = storageReference.child(System.currentTimeMillis() + ".jpg");
-            UploadTask uploadTask = imageRef.putBytes(data);
-            uploadTask.addOnSuccessListener(taskSnapshot -> imageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                String imageUrl = uri.toString();
-                saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl, selectedCategory);
-            }));
-        }
+            byte[] imageBytes = baos.toByteArray();
+            String base64EncodedImage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
 
+            // Сохранение закодированного изображения в Firebase Realtime Database
+            saveProductDetailsToDatabase(productName, rating, selectedComponents, base64EncodedImage, selectedCategory);
+        } /*else if (imageUri != null) { НЕ РАБОТАЕТ
+            // Обработка загрузки изображения из Uri в Firebase Storage
+            final StorageReference storageReference = FirebaseStorage.getInstance().getReference("products"); // Путь к папке 'products'
+            final StorageReference imageRef = storageReference.child(imageUri.getLastPathSegment()); // Имя файла (можно заменить на любое уникальное имя)
+
+            UploadTask uploadTask = imageRef.putFile(imageUri);
+            uploadTask.addOnFailureListener(exception -> {
+                // Handle unsuccessful uploads
+                Toast.makeText(getContext(), "Ошибка при загрузке изображения", Toast.LENGTH_SHORT).show();
+            }).addOnSuccessListener(taskSnapshot -> {
+                imageRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                    String imageUrl = uri.toString();
+                    saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl, selectedCategory);
+                });
+            });*/
+    }
+
+    /** * Функция для сохранения данных продукта в Firebase Realtime Database */
+    private void saveProductDetailsToDatabase(
+            String productName,
+            float rating,
+            List<String> selectedComponents,
+            String imageUrlOrBase64,
+            String category
+    ) {
+        // Создание нового ключа для продукта
+        String productKey = databaseReference.push().getKey();
+
+        // Данные продукта
+        HashMap<String, Object> productData = new HashMap<>();
+        productData.put("name", productName);
+        productData.put("rating", rating);
+        productData.put("category", category);
+        productData.put("imageUrl", imageUrlOrBase64); // Поле imageUrl для хранения ссылки на изображение
+        productData.put("components", selectedComponents);
+
+        // Сохранение данных в Firebase
+        databaseReference.child(productKey).updateChildren(productData)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Toast.makeText(getContext(), "Продукт сохранен", Toast.LENGTH_SHORT).show();
+                        clearForm();
+                    } else {
+                        Toast.makeText(getContext(), "Ошибка при сохранении продукта", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
     private String getFileExtension(Uri uri){
         ContentResolver contentResolver = requireActivity().getContentResolver();
@@ -431,7 +450,7 @@ public class AddFragment extends Fragment {
         return mime.getExtensionFromMimeType(contentResolver.getType(uri));
     }
 
-    private void saveProductDetailsToDatabase(String productName, float rating, List<String> selectedComponents, String imageUrl, String selectedCategory) {
+    /*private void saveProductDetailsToDatabase(String productName, float rating, List<String> selectedComponents, String imageUrl, String selectedCategory) {
 
         DatabaseReference productRef = databaseReference.push();
 
@@ -443,7 +462,7 @@ public class AddFragment extends Fragment {
         }).addOnFailureListener(e -> {
             Toast.makeText(getContext(), "Ошибка при добавлении продукта", Toast.LENGTH_SHORT).show();
         });
-    }
+    }*/
 
     private void clearForm() {
         binding.editText.setText("");

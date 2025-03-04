@@ -125,7 +125,8 @@ public class CameraFragment extends Fragment {
     }
 
     private void findProductInDatabase(String productName) {
-        databaseReference.orderByChild("name").equalTo(productName).addListenerForSingleValueEvent(new ValueEventListener() {
+        DatabaseReference productsReference = databaseReference.child("products");
+        productsReference.orderByChild("name").equalTo(productName).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {

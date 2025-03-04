@@ -38,11 +38,16 @@
         android:id="@+id/navigation_add"
         android:name="com.example.curemetik.ui.add.AddFragment"
         android:label="@string/title_add"
-        tools:layout="@layout/fragment_add" />
+        tools:layout="@layout/fragment_add"
+        />
 
     <fragment
         android:id="@+id/navigation_search"
         android:name="com.example.curemetik.ui.search.SearchFragment"
         android:label="@string/title_search"
-        tools:layout="@layout/fragment_search" />
+        tools:layout="@layout/fragment_search" >
+    <action
+        android:id="@+id/action_navigation_search_to_ProductDetailsFragment"
+        app:destination="@id/ProductDetailsFragment" />
+    </fragment>
 </navigation>
