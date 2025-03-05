@@ -3,6 +3,7 @@ package com.example.curemetik.ui.camera;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.view.LayoutInflater;
@@ -18,7 +19,6 @@ import androidx.fragment.app.Fragment;
 
 import com.example.curemetik.databinding.FragmentProductDetailsBinding;
 import com.example.curemetik.models.Product;
-import com.example.curemetik.models.Product1;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -137,10 +137,10 @@ public class ProductDetailsFragment extends Fragment {
         }
     }
 
-    public static ProductDetailsFragment newInstance(Product1 product) {
+    public static ProductDetailsFragment newInstance(Product product) {
         ProductDetailsFragment fragment = new ProductDetailsFragment();
         Bundle args = new Bundle();
-        args.putParcelable("product", product);
+        args.putParcelable("product", (Parcelable) product);
         fragment.setArguments(args);
         return fragment;
     }

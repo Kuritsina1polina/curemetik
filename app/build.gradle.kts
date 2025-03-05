@@ -55,6 +55,7 @@ dependencies {
     implementation("com.google.firebase:firebase-auth:20.0.1")
     implementation("com.google.firebase:firebase-database:19.7.0")
     implementation("com.google.firebase:firebase-storage:20.0.0")
+    implementation("com.google.firebase:firebase-firestore:24.0.0")
     implementation("com.firebaseui:firebase-ui-database:8.0.1")
 
     implementation("androidx.navigation:navigation-fragment-ktx:2.3.5")
