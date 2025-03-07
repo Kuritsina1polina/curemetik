@@ -14,7 +14,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -24,20 +23,23 @@ import androidx.navigation.Navigation;
 
 import com.example.curemetik.R;
 import com.example.curemetik.databinding.FragmentCameraBinding;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.mlkit.vision.common.InputImage;
-import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
 import java.io.IOException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class CameraFragment extends Fragment {
 
@@ -49,6 +51,7 @@ public class CameraFragment extends Fragment {
     private Uri imageUri;
     private TextRecognizer textRecognizer;
     private DatabaseReference databaseReference;
+    private FirebaseFirestore db;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -68,6 +71,7 @@ public class CameraFragment extends Fragment {
 
         // Initialize Firebase Database Reference
         databaseReference = FirebaseDatabase.getInstance().getReference("products");
+        db = FirebaseFirestore.getInstance();
 
         return root;
     }
@@ -132,6 +136,7 @@ public class CameraFragment extends Fragment {
                 if (snapshot.exists()) {
                     for (DataSnapshot productSnapshot : snapshot.getChildren()) {
                         String productId = productSnapshot.getKey();
+                        addToCheckHistory(productId, productName);
                         navigateToProductDetails(productId);
                     }
                 } else {
@@ -144,6 +149,22 @@ public class CameraFragment extends Fragment {
                 Toast.makeText(requireContext(), "Database error", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void addToCheckHistory(String productId, String productName) {
+        Map<String, Object> checkHistory = new HashMap<>();
+        checkHistory.put("productId", productId);
+        checkHistory.put("productName", productName);
+        checkHistory.put("date", new Date());
+
+        db.collection("checkHistory")
+                .add(checkHistory)
+                .addOnSuccessListener(documentReference -> {
+                    Toast.makeText(requireContext(), "Check history added", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(requireContext(), "Failed to add check history", Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void navigateToProductDetails(String productId) {

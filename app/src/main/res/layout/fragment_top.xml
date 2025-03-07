@@ -1,16 +1,96 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:padding="16dp"
+    tools:context=".ui.top.TopFragment">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+    <Button
+        android:id="@+id/btnMakeup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Макияж"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/btnFace"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/btnFace"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Лицо"
+        app:layout_constraintTop_toBottomOf="@id/btnMakeup"
+        app:layout_constraintBottom_toTopOf="@id/btnEyes"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/btnEyes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Глаза"
+        app:layout_constraintTop_toBottomOf="@id/btnFace"
+        app:layout_constraintBottom_toTopOf="@id/btnLips"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/btnLips"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Губы"
+        app:layout_constraintTop_toBottomOf="@id/btnEyes"
+        app:layout_constraintBottom_toTopOf="@id/btnEyebrows"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/btnEyebrows"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Брови"
+        app:layout_constraintTop_toBottomOf="@id/btnLips"
+        app:layout_constraintBottom_toTopOf="@id/btnCare"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/btnCare"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Уход"
+        app:layout_constraintTop_toBottomOf="@id/btnEyebrows"
+        app:layout_constraintBottom_toTopOf="@id/btnHair"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/btnHair"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Волосы"
+        app:layout_constraintTop_toBottomOf="@id/btnCare"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp" />
+
+    <FrameLayout
+        android:id="@+id/fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="16dp" />
+
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+

@@ -21,6 +21,9 @@ public class Product {
         this.category = category;
     }
 
+    public Product(String productId, String productName, String s, double rating, String imageUrl) {
+    }
+
     // Getters and setters
     public String getName() {
         return name;

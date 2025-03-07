@@ -1,6 +1,6 @@
-package com.example.curemetik.ui.history;
-
+package com.example.curemetik.ui.top;
 import android.os.Bundle;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,42 +9,49 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+
 import com.example.curemetik.R;
-import com.example.curemetik.databinding.FragmentHistoryBinding;
-import com.example.curemetik.models.CheckHistory;
+import com.example.curemetik.databinding.FragmentTopDetailsBinding;
 import com.example.curemetik.models.Product;
+import com.google.firebase.firestore.Query;
 import com.example.curemetik.ui.camera.ProductDetailsFragment;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HistoryFragment extends Fragment {
+public class TopFragmentDetails extends Fragment {
 
-    private FragmentHistoryBinding binding;
+    private FragmentTopDetailsBinding binding;
     private RecyclerView recyclerView;
-    private HistoryAdapter historyAdapter;
+    private ProductAdapter productAdapter;
     private List<Product> productList;
     private FirebaseFirestore db;
+    private String category;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        binding = FragmentHistoryBinding.inflate(inflater, container, false);
+        binding = FragmentTopDetailsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
         recyclerView = binding.recyclerView;
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         productList = new ArrayList<>();
-        historyAdapter = new HistoryAdapter(productList);
-        recyclerView.setAdapter(historyAdapter);
+        productAdapter = new ProductAdapter(productList);
+        recyclerView.setAdapter(productAdapter);
 
         db = FirebaseFirestore.getInstance();
 
-        // Загрузка истории проверок
-        loadCheckHistory();
+        // Получаем категорию из аргументов
+        if (getArguments() != null) {
+            category = getArguments().getString("category");
+        }
 
-        historyAdapter.setOnItemClickListener(product -> {
+        // Загрузка топ-продуктов для выбранной категории
+        loadTopProductsByCategory(category, 5);
+
+        productAdapter.setOnItemClickListener(product -> {
             ProductDetailsFragment fragment = ProductDetailsFragment.newInstance(product);
             requireActivity().getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, fragment)
@@ -55,25 +62,20 @@ public class HistoryFragment extends Fragment {
         return root;
     }
 
-    private void loadCheckHistory() {
-        db.collection("checkHistory")
-                .orderBy("date")
+    private void loadTopProductsByCategory(String category, int limit) {
+        db.collection("products")
+                .whereEqualTo("category", category)
+                .orderBy("rating", Query.Direction.DESCENDING)
+                .limit(limit)
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         productList.clear();
                         for (QueryDocumentSnapshot document : task.getResult()) {
-                            CheckHistory checkHistory = document.toObject(CheckHistory.class);
-                            Product product = new Product(
-                                    checkHistory.getProductId(),
-                                    checkHistory.getProductName(),
-                                    "", // Замените на категорию, если она есть
-                                    checkHistory.getRating(),
-                                    checkHistory.getImageUrl()
-                            );
+                            Product product = document.toObject(Product.class);
                             productList.add(product);
                         }
-                        historyAdapter.notifyDataSetChanged();
+                        productAdapter.notifyDataSetChanged();
                     }
                 });
     }

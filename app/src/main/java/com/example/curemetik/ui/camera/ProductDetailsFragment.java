@@ -13,10 +13,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RatingBar;
 import android.widget.Toast;
+import android.widget.Toolbar;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
+import com.example.curemetik.R;
 import com.example.curemetik.databinding.FragmentProductDetailsBinding;
 import com.example.curemetik.models.Product;
 import com.google.firebase.database.DataSnapshot;
@@ -40,10 +43,6 @@ public class ProductDetailsFragment extends Fragment {
         View root = binding.getRoot();
 
         // Привяжем кнопку "назад" к Toolbar
-        binding.toolbar.setNavigationOnClickListener(v -> {
-            // Возврат на предыдущий фрагмент
-            requireActivity().onBackPressed();
-        });
 
         // Get product ID from arguments
         productId = getArguments().getString("productId");
@@ -57,7 +56,12 @@ public class ProductDetailsFragment extends Fragment {
         // Set up comment submission
         Button submitCommentButton = binding.submitCommentButton;
         submitCommentButton.setOnClickListener(v -> submitComment());
-
+        androidx.appcompat.widget.Toolbar toolbar = root.findViewById(R.id.toolbar);
+        ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
+        toolbar.setNavigationOnClickListener(v -> {
+            // Возврат на предыдущий фрагмент
+            requireActivity().onBackPressed();
+        });
         return root;
     }
 
@@ -109,14 +113,18 @@ public class ProductDetailsFragment extends Fragment {
     }
 
     private void decodeAndSetImage(String base64Image) {
-        // Декодируем Base64 строку в байтовый массив
-        byte[] decodedBytes = Base64.decode(base64Image, Base64.DEFAULT);
+        if (base64Image != null) {
+            // Декодируем Base64 строку в байтовый массив
+            byte[] decodedBytes = Base64.decode(base64Image, Base64.DEFAULT);
 
-        // Создаем Bitmap из байтового массива
-        Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+            // Создаем Bitmap из байтового массива
+            Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
 
-        // Устанавливаем Bitmap в ImageView
-        binding.productImage.setImageBitmap(bitmap);
+            // Устанавливаем Bitmap в ImageView
+            binding.productImage.setImageBitmap(bitmap);
+        } else {
+            Toast.makeText(getContext(), "Изображение не найдено", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void submitComment() {

@@ -15,6 +15,7 @@ import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,9 +49,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
+
 
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -397,21 +396,23 @@ public class AddFragment extends Fragment {
 
             // Сохранение закодированного изображения в Firebase Realtime Database
             saveProductDetailsToDatabase(productName, rating, selectedComponents, base64EncodedImage, selectedCategory);
-        } /*else if (imageUri != null) { НЕ РАБОТАЕТ
-            // Обработка загрузки изображения из Uri в Firebase Storage
-            final StorageReference storageReference = FirebaseStorage.getInstance().getReference("products"); // Путь к папке 'products'
-            final StorageReference imageRef = storageReference.child(imageUri.getLastPathSegment()); // Имя файла (можно заменить на любое уникальное имя)
+        } else if (imageUri != null) {
+            // Если изображение выбрано из галереи, нужно его закодировать в Base64
+            final InputStream imageStream;
+            try {
+                imageStream = requireActivity().getContentResolver().openInputStream(imageUri);
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+            final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            selectedImage.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+            byte[] imageBytes = baos.toByteArray();
+            String base64EncodedImage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
 
-            UploadTask uploadTask = imageRef.putFile(imageUri);
-            uploadTask.addOnFailureListener(exception -> {
-                // Handle unsuccessful uploads
-                Toast.makeText(getContext(), "Ошибка при загрузке изображения", Toast.LENGTH_SHORT).show();
-            }).addOnSuccessListener(taskSnapshot -> {
-                imageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                    String imageUrl = uri.toString();
-                    saveProductDetailsToDatabase(productName, rating, selectedComponents, imageUrl, selectedCategory);
-                });
-            });*/
+            // Сохранение закодированного изображения в Firebase Realtime Database
+            saveProductDetailsToDatabase(productName, rating, selectedComponents, base64EncodedImage, selectedCategory);
+        }
     }
 
     /** * Функция для сохранения данных продукта в Firebase Realtime Database */
@@ -434,7 +435,7 @@ public class AddFragment extends Fragment {
         productData.put("components", selectedComponents);
 
         // Сохранение данных в Firebase
-        databaseReference.child(productKey).updateChildren(productData)
+        FirebaseDatabase.getInstance().getReference("products").child(productKey).updateChildren(productData)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         Toast.makeText(getContext(), "Продукт сохранен", Toast.LENGTH_SHORT).show();
